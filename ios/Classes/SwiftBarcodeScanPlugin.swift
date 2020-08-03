@@ -43,6 +43,9 @@ public class SwiftBarcodeScanPlugin: NSObject, FlutterPlugin, BarcodeScannerView
         }
         scannerViewController.delegate = self
         hostViewController?.present(navigationController, animated: false)
+
+
+        navigationController.navigationBar.barTintColor = UIColor.black
     }
     
     private func getPayload<T : SwiftProtobuf.Message>(call: FlutterMethodCall) -> T? {

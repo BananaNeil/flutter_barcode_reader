@@ -23,10 +23,11 @@ class ScannerOverlay: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        line.backgroundColor = UIColor.red
-        line.translatesAutoresizingMaskIntoConstraints = false
-        
-        addSubview(line)
+
+        /* line.backgroundColor = UIColor.red */
+        /* line.translatesAutoresizingMaskIntoConstraints = false */
+        /*  */
+        /* addSubview(line) */
     }
     
     required init?(coder: NSCoder) {
@@ -55,7 +56,7 @@ class ScannerOverlay: UIView {
         let lineRect = scanLineRect
         line.frame = lineRect
         
-        // draw the green corners
+        // draw the corners
         let cornerSize: CGFloat = 30
         let path = UIBezierPath()
         
@@ -81,8 +82,8 @@ class ScannerOverlay: UIView {
         path.addLine(to: CGPoint(x: holeRect.origin.x, y: bottomHoleY))
         path.addLine(to: CGPoint(x: holeRect.origin.x, y: bottomHoleY - cornerSize))
         
-        path.lineWidth = 2
-        UIColor.green.setStroke()
+        path.lineWidth = 5
+        UIColor.blue.setStroke()
         path.stroke()
     }
     

@@ -1,5 +1,6 @@
 package de.mintware.barcode_scan
 
+import android.hardware.Camera
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -17,9 +18,11 @@ class BarcodeScannerActivity : Activity(), ZXingScannerView.ResultHandler {
 
     private lateinit var config: Protos.Configuration
     private var scannerView: ZXingScannerView? = null
+    private var useCamera: Int = -1
 
     companion object {
         const val TOGGLE_FLASH = 200
+        const val FLIP = 400
         const val CANCEL = 300
         const val EXTRA_CONFIG = "config"
         const val EXTRA_RESULT = "scan_result"
@@ -46,6 +49,7 @@ class BarcodeScannerActivity : Activity(), ZXingScannerView.ResultHandler {
         super.onCreate(savedInstanceState)
 
         config = Protos.Configuration.parseFrom(intent.extras!!.getByteArray(EXTRA_CONFIG))
+        useCamera = config.useCamera
     }
 
     private fun setupScannerView() {
@@ -77,8 +81,14 @@ class BarcodeScannerActivity : Activity(), ZXingScannerView.ResultHandler {
         if (scannerView?.flash == true) {
             buttonText = config.stringsMap["flash_off"]
         }
-        val flashButton = menu.add(0, TOGGLE_FLASH, 0, buttonText)
-        flashButton.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        
+        if (Camera.getNumberOfCameras() <= 1) {
+          val flashButton = menu.add(0, TOGGLE_FLASH, 0, buttonText)
+          flashButton.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        } else {
+          val flipButton = menu.add(0, FLIP, 0, "Flip")
+          flipButton.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        }
 
         val cancelButton = menu.add(0, CANCEL, 0, config.stringsMap["cancel"])
         cancelButton.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
@@ -90,6 +100,17 @@ class BarcodeScannerActivity : Activity(), ZXingScannerView.ResultHandler {
         if (item.itemId == TOGGLE_FLASH) {
             scannerView?.toggleFlash()
             this.invalidateOptionsMenu()
+            return true
+        }
+        if (item.itemId == FLIP) {
+            if (useCamera == -1) {
+              useCamera = 1
+            } else {
+              useCamera += 1
+            }
+            useCamera %= Camera.getNumberOfCameras()
+            this.onPause()
+            this.onResume()
             return true
         }
         if (item.itemId == CANCEL) {
@@ -109,8 +130,8 @@ class BarcodeScannerActivity : Activity(), ZXingScannerView.ResultHandler {
         super.onResume()
         setupScannerView()
         scannerView?.setResultHandler(this)
-        if (config.useCamera > -1) {
-            scannerView?.startCamera(config.useCamera)
+        if (useCamera > -1) {
+            scannerView?.startCamera(useCamera)
         } else {
             scannerView?.startCamera()
         }

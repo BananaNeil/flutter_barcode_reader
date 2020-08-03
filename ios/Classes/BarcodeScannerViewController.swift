@@ -134,6 +134,7 @@ class BarcodeScannerViewController: UIViewController {
   
   private func startScan() {
     do {
+      let cameraFromConfig = config.useCamera == 1 ? MTBCamera.front : MTBCamera.back
       try scanner!.startScanning(with: cameraFromConfig, resultBlock: { codes in
         if let code = codes?.first {
           let codeType = self.formatMap.first(where: { $0.value == code.type });
@@ -171,18 +172,44 @@ class BarcodeScannerViewController: UIViewController {
   @objc private func onToggleFlash() {
     setFlashState(!isFlashOn)
   }
+
+  @objc private func onToggleCamera() {
+    if (config.useCamera == -1) {
+      config.useCamera = 1
+    } else {
+      config.useCamera += 1
+    }
+
+    config.useCamera = Int32(config.useCamera) % Int32(AVCaptureDevice.devices(for: .video).count)
+    if scanner!.isScanning() {
+      self.scanner!.stopScanning()
+    }
+    startScan()
+  }
   
   private func updateToggleFlashButton() {
-    if !hasTorch {
-      return
-    }
-    
     let buttonText = isFlashOn ? config.strings["flash_off"] : config.strings["flash_on"]
-    navigationItem.rightBarButtonItem = UIBarButtonItem(title: buttonText,
-                                                        style: .plain,
-                                                        target: self,
-                                                        action: #selector(onToggleFlash)
+    let flipButton = UIBarButtonItem(title: "Flip Camera",
+          style: .plain,
+          target: self,
+          action: #selector(onToggleCamera)
+      )
+
+    let flashButton = UIBarButtonItem(title: buttonText,
+        style: .plain,
+        target: self,
+        action: #selector(onToggleFlash)
     )
+
+    var buttons = [UIBarButtonItem]()
+
+    if AVCaptureDevice.devices(for: .video).count > 1 {
+      buttons.append(flipButton)
+    } else if hasTorch {
+      buttons.append(flashButton)
+    }
+
+    navigationItem.rightBarButtonItems = buttons
   }
   
   private func setFlashState(_ on: Bool) {
@@ -225,9 +252,5 @@ class BarcodeScannerViewController: UIViewController {
     })
     
     return types.map({ t in t.rawValue})
-  }
-  
-  private var cameraFromConfig: MTBCamera {
-    return config.useCamera == 1 ? .front : .back
   }
 }
